@@ -1,4 +1,3 @@
-```markdown
 # 📄 Tobacco-3482 Document Image Classifier
 
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.16+-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
@@ -103,4 +102,3 @@ python tkinter_interface.py
 
 ## 📈 Results
 The model achieves a highly competitive **~85.2% Validation Accuracy** entirely through visual layout recognition (without utilizing Optical Character Recognition (OCR) to read the text). Please review `confusion_matrix.png` and `accuracy_loss_curves.png` for detailed per-class precision and recall metrics.
-```
