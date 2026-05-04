@@ -7,54 +7,59 @@
 
 A highly optimized deep learning project designed to classify vintage corporate document images into 10 distinct categories using the **Tobacco-3482 dataset**. 
 
-This project utilizes a fine-tuned **EfficientNetV2-S** architecture. It is uniquely engineered to train successfully within strictly constrained memory environments (like the 12.7 GB RAM limit of Google Colab's free tier) and includes robust, CPU-forced graphical interfaces for local deployment.
+This repository features two state-of-the-art approaches:
+1.  **CNN-based:** Fine-tuned **EfficientNetV2-S** (Keras/TensorFlow).
+2.  **Transformer-based:** Fine-tuned **Vision Transformer (ViT-B/16)** (PyTorch).
+
+Both models are engineered to train successfully within strictly constrained memory environments (like the 12.7 GB RAM limit of Google Colab's free tier) and include robust, CPU-forced graphical interfaces for local deployment of the CNN model.
 
 ---
 
 ## 📂 Repository Structure
 
-Based on the project archive[cite: 2], the repository contains the following files:
+The repository contains the following core files:
 
-*   **`TobacoCode2.ipynb`**: The main Google Colab notebook containing the complete data pipeline, augmentations, model architecture, two-phase training strategy, and evaluation metrics[cite: 2].
-*   **`streamlit_app.py`**: A modern, lightweight web application built with Streamlit for running local inference via browser[cite: 2].
-*   **`tkinter_interface.py`**: A standalone desktop application built with Tkinter for users who prefer a native OS graphical interface[cite: 2].
-*   **`accuracy_loss_curves.png`**: A visualization of the model's training performance across both training phases[cite: 2].
-*   **`confusion_matrix.png`**: A detailed heatmap showing the model's classification accuracy and common misclassifications[cite: 2].
+*   **`Tobaco_Code_CNN.ipynb`**: Google Colab notebook for the CNN pipeline using **EfficientNetV2-S**. Includes data augmentation (MixUp, CutMix), two-phase training, and evaluation.
+*   **`Tobaco_Code_ViT.ipynb`**: Google Colab notebook for the **Vision Transformer (ViT-B/16)** pipeline. This model achieves the highest accuracy in the repository.
+*   **`streamlit_app.py`**: A modern web application built with Streamlit for running local inference (currently configured for the CNN model).
+*   **`tkinter_interface.py`**: A standalone desktop application built with Tkinter for local inference (currently configured for the CNN model).
+*   **`accuracy_loss_curves_CNN.png`**: Training performance curves for the EfficientNet model.
+*   **`confusion_matrix_CNN.png`**: Heatmap showing classification results for the EfficientNet model.
+*   **`training_curves_ViT.png`**: Training performance curves for the ViT model.
+*   **`confusion_matrix_ViT.png`**: Heatmap showing classification results for the ViT model.
 
-*(Note: The trained model weights `efficientnetv2s_tobacco3482.h5` must be generated via the notebook or placed manually into the root directory to run the UI apps).*
+*(Note: The trained model weights `efficientnetv2s_tobacco3482.h5` must be generated via the CNN notebook or placed manually into the root directory to run the UI apps).*
 
 ---
 
 ## 📊 The Dataset
 
-The model is trained on the **Tobacco-3482** dataset, a subset of the RVL-CDIP database. It consists of 3,482 grayscale/RGB document images belonging to the following **10 classes**:
+The models are trained on the **Tobacco-3482** dataset, available on Kaggle:
+👉 **[Tobacco-3482 Dataset on Kaggle](https://www.kaggle.com/datasets/patrickaudriaz/tobacco3482jpg)**
+
+It is a subset of the RVL-CDIP database consisting of 3,482 grayscale/RGB document images belonging to the following **10 classes**:
 `ADVE`, `Email`, `Form`, `Letter`, `Memo`, `News`, `Note`, `Report`, `Resume`, `Scientific`.
 
 ---
 
-## 🧠 Model Architecture & Training Highlights
+## 🧠 Model Architectures & Performance
 
-### 1. The Model: EfficientNetV2-S
-Instead of a lightweight baseline (like EfficientNetB0), this project utilizes the much more powerful **EfficientNetV2-S** (21.7 million parameters). The classification head was fully custom-built featuring:
-*   **GeM Pooling:** A concatenation of Global Average Pooling and Global Max Pooling to capture both document layout and distinct visual markers (like logos).
-*   **Dense Layers:** Two Dense layers (512 and 256 units) utilizing `gelu` activations.
-*   **Regularization:** Heavy Dropout (35%) and Batch Normalization to prevent overfitting.
+### 1. Vision Transformer (ViT-B/16) - *Top Performer*
+The **ViT-B/16** model (from `torchvision`) achieved the best results:
+*   **Validation Accuracy:** **89.20%**
+*   **Framework:** PyTorch
+*   **Training:** Two-phase training (Linear Probe + Full Fine-tuning) with Cosine Decay.
 
-### 2. Low-RAM Optimization (Colab Survival Guide)
-To prevent out-of-memory (OOM) crashes on machines with < 13GB RAM, the `tf.data` pipeline was heavily modified:
-*   **No `.cache()`:** Bypassed the standard caching mechanism to prevent memory hoarding of 384x384 uncompressed images.
-*   **Restricted Parallel Calls:** Hardcoded `num_parallel_calls=2` instead of using `tf.data.AUTOTUNE` to limit background CPU thread memory consumption.
-*   **Limited Prefetch:** Prefetch buffer strictly set to `1`.
+### 2. EfficientNetV2-S
+The **EfficientNetV2-S** model (21.7 million parameters) provides high efficiency:
+*   **Validation Accuracy:** **86.22%**
+*   **Framework:** Keras 3 / TensorFlow
+*   **Key Features:** GeM Pooling, Label Smoothing, and heavy augmentation (MixUp, CutMix, Random Erasing).
 
-### 3. Advanced Augmentation
-To combat the dataset's small size, the model utilizes:
-*   **MixUp & CutMix:** Blending images and labels dynamically to force the model to learn localized features.
-*   **Random Erasing:** Randomly blacking out chunks of documents so the model doesn't over-rely on a single feature (like a header).
-*   **Standard Augmentation:** Random rotations, zooms, flips, and color/brightness jitter.
-
-### 4. Two-Phase Training
-*   **Phase 1 (Warmup):** 10 Epochs with a frozen backbone. Trains only the new custom head using a high learning rate (3e-4) to prevent gradient shock.
-*   **Phase 2 (Fine-Tuning):** 50 Epochs with all layers unfrozen. Uses the `AdamW` optimizer with a **Cosine Decay** learning rate schedule, peaking at 5e-5 and settling at 1e-7.
+### Low-RAM Optimization (Colab Survival Guide)
+Both pipelines are optimized for low-RAM environments:
+*   **No `.cache()`:** Bypassed standard caching to prevent memory hoarding.
+*   **Restricted Parallelism:** Limited CPU threads and prefetch buffers to avoid OOM crashes on machines with < 13GB RAM.
 
 ---
 
